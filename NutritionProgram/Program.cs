@@ -114,7 +114,7 @@ class Product
     }
 
     // Метод подсчета ккал
-    private void CountingCalories()
+    protected internal void CountingCalories()
     {
         prod.kcal = (uint)(prod.protein * 4 + prod.fat * 9 + prod.carbohydrates * 4);
     }
@@ -158,7 +158,7 @@ class ProductsTable : Product
             using (FileStream list = new FileStream(filePath,
                     FileMode.OpenOrCreate, FileAccess.Write))
             {
-                WriteLine("Составление таблицы по умолчанию...\n");
+                WriteLine("Составление списка продуктов по умолчанию...\n");
                 // Добавление базового списка продуктов
                 BaseProducts();
 
@@ -314,26 +314,17 @@ class ProductsTable : Product
     }
 
     // Удаление всего списка продуктов в файле
-    /*protected internal void RemoveAllProducts()
+    protected internal void RemoveAllProducts()
     {
         // Проверка наличия в списке продуктов
         using (FileStream list = new FileStream(filePath,
                 FileMode.Truncate, FileAccess.Write))
         {
-            // Создание пустого массива для записи в файл и очистки его
-            byte[] writeBytes = new byte[0];
-            // запись массива байтов в файл
-            list.Write(writeBytes, 0, 0);
-        }
-        // запись в файл
-        using (FileStream list = new FileStream(filePath,
-                FileMode.OpenOrCreate, FileAccess.Write))
-        {
-            WriteLine("Составление таблицы по умолчанию...\n");
-            // Добавление базового списка продуктов
+            // Очистка старого и добавление базового списка продуктов
+            products.Clear();
             BaseProducts();
 
-            foreach (var k in products)   // KeyValuePair<string, Product> k
+            foreach (var k in products)
             {
                 // преобразуем строку в байты
                 byte[] writeBytes = Encoding.Default.GetBytes('~' + k.Value.ToString());
@@ -341,9 +332,7 @@ class ProductsTable : Product
                 list.Write(writeBytes, 0, writeBytes.Length);
             }
         }
-        WriteLine($"Список продуктов пуст.\n");
-        ReadLine();
-    }*/
+    }
 
     // Метод поиска продукта
     protected internal Product PrintProd()
@@ -413,14 +402,20 @@ class ProductsTable : Product
     private void BaseProducts()
     {
         products.Add("АРАХИС", new Product("Арахис", 26.3, 45.2, 9.9));
-        products.Add("КУРИЦА_ОКОРОЧОК", new Product("Курица_Окорочок", 21.3, 11, 0.1));
-        products.Add("КУРИЦА_ГРУДКА", new Product("Курица_Грудка", 21.6, 1.9, 0.4));
-        products.Add("КАРАСЬ", new Product("Карась", 17.7, 1.8, 0));
-        products.Add("ЯЙЦО_КУРИНОЕ", new Product("Яйцо_куриное", 12.7, 11.5, 0.7));
-        products.Add("БАТОН_НАРЕЗНОЙ_В/С", new Product("Батон_нарезной_в/с", 7.5, 2.9, 51.4));
+        products.Add("ОКОРОЧОК", new Product("Окорочок", 21.3, 11, 0.1));
+        products.Add("ГРУДКА_КУР", new Product("ГРУДКА_КУР", 21.6, 1.9, 0.4));
+        products.Add("СУДАК_ЖАР", new Product("СУДАК_ЖАР", 23.3, 2.6, 0));
+        products.Add("ЯЙЦО", new Product("Яйцо", 12.7, 11.5, 0.7));
+        products.Add("БАТОН_НАРЕЗНОЙ", new Product("Батон_нарезной", 7.5, 2.9, 51.4));
         products.Add("ХЛЕБ_БЕЛЫЙ", new Product("Хлеб белый", 8.9, 3.3, 46.7));
         products.Add("АПЕЛЬСИН", new Product("Апельсин", 0.9, 0.2, 8.1));
         products.Add("АРБУЗ", new Product("Арбуз", 0.7, 0.1, 5.8));
+        products.Add("СУП_ФРИКАД", new Product("СУП_ФРИКАД", 6.7, 1.7, 3.8));
+        products.Add("БОРЩ", new Product("БОРЩ", 4.9, 1.4, 4.9));
+        products.Add("ОВСЯНОБЛИН_ГОТ", new Product("ОВСЯНОБЛИН_ГОТ", 16.6, 13.4, 46.2));
+        products.Add("ОМЛЕТ_ГОТ", new Product("ОМЛЕТ_ГОТ", 21, 14, 6));
+        products.Add("ПЛОВ", new Product("Арбуз", 6.6, 1.2, 14.5));
+        products.Add("КАРТОФЕЛЬ_ПЕЧ", new Product("КАРТОФЕЛЬ_ПЕЧ", 3.4, 1.7, 14.5));
     }
 
     // Вывод списка продуктов из коллекции в консоль
@@ -431,6 +426,151 @@ class ProductsTable : Product
             Write(key.Value.ToString());
         }
         WriteLine("\n");
+    }
+
+    // Метод составления блюда используя продукты из списка и добавление полученного блюда в библиотеку продуктов
+    protected internal void DishCompilation()
+    {
+        List<Product> product = new List<Product>();
+        List<double> weightProd = new List<double>();
+        double weightDish = 0, weight = 0;
+        int count = -1;
+        bool stop = false, metka = false;
+        Clear();
+        // Обновление списка продуктов из файла
+        ReadFileFillList();
+        do
+        {
+            WriteLine("\t\t\t\tРежим составления блюда:\n\n\tВыберите из библиотеки продукты " +
+                "и добавьте в ваше блюдо. Введите вес каждого \n\t\t\tингредиента и вес получившегося блюда.\n");
+            // Вывод библиотеки продуктов
+            ForegroundColor = ConsoleColor.Green;
+            PrintTable();
+            ForegroundColor = ConsoleColor.DarkYellow;
+
+            WriteLine("\n\t\t\tСписок выбранных для блюда продуктов:\n");
+            for (int i = 0; i < product.Count; i++)
+            {
+                Write($"{weightProd[i]} гр.\t{product[i]}");
+            }
+            Write("\nВведите название продукта: ");
+            string? key = ReadLine();
+            if (key == null || key == "") { key = "ПРОДУКТ"; }
+            // Приведение названия к виду, используемому программой
+            key = key.ToUpper();
+            key = key.Replace(" ", "_");
+            // Если продукт по имени найден, то добавляем новый ингредиент
+            foreach (var p in products)
+            {
+                if (p.Key == key)
+                {
+                    // Создаем временный объект и копируем значение выбранного продукта
+                    Product temp = new Product();
+                    temp.Name = p.Key;
+                    temp.prod.protein = p.Value.prod.protein;
+                    temp.prod.fat = p.Value.prod.fat;
+                    temp.prod.carbohydrates = p.Value.prod.carbohydrates;
+                    // Добавляем новый продукт в блюдо
+                    product.Add(temp);
+                    count++;                // Увеличиваем счетчик добавленных продуктов
+                    metka = true;           // Метка добаления продукта за итерацию
+                    // Ввод веса продукта пользователем
+                    try
+                    {
+                        Write("Введите вес добавленного продукта: ");
+                        weight = Convert.ToInt32(ReadLine());
+                        if (weight < 0) { throw new Exception("Вес продукта не может быть отрицательным.\n"); }
+                    }
+                    catch
+                    {
+                        WriteLine("Некорректный ввод.\n");
+                        weight = 0;
+                    }
+                    // Добавление значение веса выбранного продукта
+                    weightProd.Add(weight);
+                }
+                weight = 0;
+            }
+
+            // Корректировка значений нутриентов продукта по весу, если
+            // было добавлен хоть один ингредиент
+            if (product.Count >= 0 && metka != false)
+            {
+                product[count].prod.protein *= (weightProd[count] / 100);
+                product[count].prod.fat *= (weightProd[count] / 100);
+                product[count].prod.carbohydrates *= (weightProd[count] / 100);
+
+                product[count].prod.protein = Math.Round(product[count].prod.protein, 1);
+                product[count].prod.fat = Math.Round(product[count].prod.fat, 1);
+                product[count].prod.carbohydrates = Math.Round(product[count].prod.carbohydrates, 1);
+                product[count].CountingCalories();
+            }
+            // Сброс метки добавления продукта. Если не будет введено нового продукта, то не произойдет
+            // корректировки значений нутриентов продукта по весу
+            metka = false;
+
+            // Запрос пользователя на выход из режима добавления продуктов
+            Write("\nДобавить еще продукт? 1 - Да; 2 - Нет.\n\n");
+            int change = 0;
+            do
+            {
+                try
+                {
+                    change = Convert.ToInt32(ReadLine());
+                }
+                catch
+                {
+                    WriteLine("Некорректный ввод.\n");
+                    change = 0;
+                }
+            } while (change < 1 || change > 2);
+            stop = (change == 1) ? false : true;
+
+            Clear();
+        } while (!stop);
+
+        if (product.Count >= 0)
+        {
+            // Ввод веса приготовленного блюда
+            do
+            {
+                try
+                {
+                    Write("Введите вес приготовленного продукта: ");
+                    weightDish = Convert.ToInt32(ReadLine());
+                    if (weightDish < 0) { throw new Exception("Вес продукта не может быть отрицательным.\n"); }
+                }
+                catch
+                {
+                    WriteLine("Некорректный ввод.\n");
+                    weightDish = 0;
+                }
+            } while (weightDish == 0);
+
+            string name;
+            double sumProtein = 0;
+            double sumFat = 0;
+            double sumCarbohydrates = 0;
+            for (int i = 0; i < weightProd.Count; i++)
+            {
+                sumProtein += product[i].prod.protein;
+                sumFat += product[i].prod.fat;
+                sumCarbohydrates += product[i].prod.carbohydrates;
+            }
+            sumProtein /= (weightDish / 100);
+            sumFat /= (weightDish / 100);
+            sumCarbohydrates /= (weightDish / 100);
+
+            sumProtein = Math.Round(sumProtein, 1);
+            sumFat = Math.Round(sumFat, 1);
+            sumCarbohydrates = Math.Round(sumCarbohydrates, 1);
+
+            Write("Введите название нового блюда: ");
+            name = ReadLine();
+            products.Add(name, new Product(name, sumProtein, sumFat, sumCarbohydrates));
+            // Запись в файл
+            FillTable();
+        }
     }
 }
 
@@ -447,6 +587,7 @@ class DayNutrition : ProductsTable
     // Массивы со значениями весов продуктов для каждого приема пищи
     protected double[] weightProductsBreakfast, weightProductsBrunch, weightProductsLunch,
         weightProductsAfternoonTea, weightProductsDinner, weightProductsSupper;
+    DateTime date;
 
     protected internal DayNutrition() : base()
     {
@@ -480,6 +621,10 @@ class DayNutrition : ProductsTable
         weightProductsAfternoonTea = new double[size];
         weightProductsDinner = new double[size];
         weightProductsSupper = new double[size];
+
+        // Формирование даты запуска программы
+        date = new DateTime();
+        date = DateTime.Today;
 
         FirstFilling();
     }
@@ -738,7 +883,8 @@ class DayNutrition : ProductsTable
     protected internal void PrintMainTable()
     {
         WriteLine("============================================================================================");
-        WriteLine("\t\t\t\tРацион за весь день\n--------------------------------------------------------------------------------------------");
+        WriteLine($"\t\t\t\tРацион за день. {date.ToLongDateString()}" +
+            "\n--------------------------------------------------------------------------------------------");
         for (int i = 0; i < NutrientsPerDay.Length; i++)
         {
             if (i == NutrientsPerDay.Length - 1)
@@ -1339,7 +1485,6 @@ class User
 class NutritionProgram : DayNutrition
 {
     User user;
-    DateTime date;
     int baseKcal;
     double baseProtein;
     double baseFat;
@@ -1347,8 +1492,6 @@ class NutritionProgram : DayNutrition
 
     public NutritionProgram() : base()
     {
-        date = new DateTime();
-        date = DateTime.Today;
         user = new User();
         BaseConsumption();
         DisplayProgram();
@@ -1540,9 +1683,10 @@ class NutritionProgram : DayNutrition
             try
             {
                 WriteLine("\n\t\t\t\tВнесение изменений в список продуктов:\n\t\t\t1 - Добавить продукт в список;\n" +
-                    "\t\t\t2 - Удалить продукт из списка;\n\t\t\t3 - Назад.\n");
+                    "\t\t\t2 - Удалить продукт из списка;\n\t\t\t3 - Сброс библиотеки продуктов до первоначальной;" +
+                    "\n\t\t\t4 - Режим составления блюда;\n\t\t\t5 - Назад.\n");
                 change = Convert.ToInt32(ReadLine());
-                if (change < 1 || change > 3) { throw new Exception("Значение должно быть от 1 до 3\n"); }
+                if (change < 1 || change > 5) { throw new Exception("Значение должно быть от 1 до 5\n"); }
             }
             catch (Exception ex)
             {
@@ -1561,9 +1705,17 @@ class NutritionProgram : DayNutrition
         }
         else if (change == 3)
         {
+            RemoveAllProducts();        // Сброс списка продуктов до первоначального
+        }
+        else if (change == 4)
+        {
+            DishCompilation();          // Метод сборки блюда из продуктов и запись в библиотеку
+        }
+        else if (change == 5)
+        {
             Clear();
             DisplayProgram();
-            MainMethod();                   // Очистка консоли и возврат в главное меню
+            MainMethod();                // Очистка консоли и возврат в главное меню
         }
         SubMainNutritionTable();
     }
